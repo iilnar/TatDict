@@ -6,6 +6,8 @@
     <string name="tatar_short">tat</string>
     <string name="rus_short">rus</string>
     <string name="swap">swap</string>
+    <string name="dictionary">dictionary</string>
+    <string name="settings">settings</string>
 
     <string name="action_settings">Settings</string>
 </resources>

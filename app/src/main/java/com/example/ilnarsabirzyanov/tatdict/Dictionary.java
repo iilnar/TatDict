@@ -1,20 +1,13 @@
 package com.example.ilnarsabirzyanov.tatdict;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.DataInputStream;
-import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Collection;
 
 public class Dictionary {
     ArrayList<DictionaryRecord> a = new ArrayList<>();
@@ -60,5 +53,27 @@ public class Dictionary {
 
     public void addWord(String word, String translation) {
         a.add(a.size(), new DictionaryRecord(word, translation));
+    }
+
+    private int binarySearch(String prefix, int comp) {
+        int l = 0, r = a.size(), m, len = prefix.length();
+        while (r - l > 1) {
+            m = l + (r - l) / 2;
+            if (a.get(m).word.substring(0, Math.min(len, a.get(m).word.length())).compareTo(prefix) >= comp) {
+                r = m;
+            } else {
+                l = m;
+            }
+        }
+        return r;
+    }
+
+    public ArrayList<DictionaryRecord> search(String prefix) {
+        int l = binarySearch(prefix, 0), r = binarySearch(prefix, 1);
+        ArrayList<DictionaryRecord> res = new ArrayList<>();
+        for (int i = l; i < r; i++) {
+            res.add(a.get(i));
+        }
+        return res;
     }
 }

@@ -4,6 +4,7 @@ import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,18 +27,22 @@ public class SettingsFragment extends Fragment {
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceStet) {
+        ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayShowTitleEnabled(true);
+        view.getRootView().findViewById(R.id.toolbarView).setVisibility(View.GONE);
         getView().findViewById(R.id.updateDB).setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         String url = "http://my-files.ru/Save/2bcqj0/rus.txt";
-                        downloadDictionary(url);
+                        //downloadDictionary(url, "rus_to_tat.file");
+                        url = "http://ge.tt/api/1/files/35sa4UR2/0/blob?download";
+                        downloadDictionary(url, "tat_to_rus.file");
                     }
                 }
         );
     }
 
-    private void downloadDictionary(String url) {
+    private void downloadDictionary(String url, String fileName) {
         final ProgressDialog progressDialog = new ProgressDialog(getContext());
         new AsyncTask<String, Integer, File>() {
             private Exception m_error = null;
@@ -71,7 +76,7 @@ public class SettingsFragment extends Fragment {
                     httpURLConnection.connect();
 
                     //file = File.createTempFile("base", "tmp");
-                    file = new File(getActivity().getExternalFilesDir(null), "tat_to_rus.file");
+                    file = new File(getActivity().getExternalFilesDir(null), params[1]);
                     fileOutputStream = new FileOutputStream(file);
                     inputStream = httpURLConnection.getInputStream();
 
@@ -108,7 +113,7 @@ public class SettingsFragment extends Fragment {
                 progressDialog.hide();
                 //file.delete();
             }
-        }.execute(url);
+        }.execute(url, fileName);
     }
 
 }
