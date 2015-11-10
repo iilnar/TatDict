@@ -10,6 +10,7 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -27,6 +28,8 @@ public class DictionaryFragment extends Fragment {
     RecyclerView recyclerView;
     RecyclerViewAdapter recyclerViewAdapter;
     String dir = "tat_to_rus";
+    EditText editText;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.dictionary_fragment, container, false);
@@ -53,6 +56,7 @@ public class DictionaryFragment extends Fragment {
         final View rootView = view.getRootView();
         ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayShowTitleEnabled(false);
         rootView.findViewById(R.id.toolbarView).setVisibility(View.VISIBLE);
+        rootView.findViewById(R.id.text).setVisibility(View.VISIBLE);
         recyclerView = (RecyclerView) getView().findViewById(R.id.recyclerView);
         recyclerViewAdapter = new RecyclerViewAdapter(records);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
@@ -64,7 +68,7 @@ public class DictionaryFragment extends Fragment {
         recyclerView.setLayoutManager(linearLayoutManager);
         //recyclerView.setItemAnimator(itemAnimator);
 
-        EditText editText = (EditText) rootView.findViewById(R.id.text);
+        editText = (EditText) rootView.findViewById(R.id.text);
         editText.addTextChangedListener(
                 new TextWatcher() {
                     @Override
@@ -101,11 +105,26 @@ public class DictionaryFragment extends Fragment {
                                 break;
                         }
                         extractDictionary(new File(getActivity().getExternalFilesDir(null), dir + ".file"));
+                        ArrayList<DictionaryRecord> res = dictionary.search(editText.getText().toString());
+                        records.clear();
+                        for (DictionaryRecord dr : res) {
+                            records.add(dr);
+                        }
+                        recyclerViewAdapter.notifyDataSetChanged();
                         CharSequence t = ((TextView) rootView.findViewById(R.id.fromLang)).getText();
                         ((TextView) rootView.findViewById(R.id.fromLang)).setText(((TextView) rootView.findViewById(R.id.toLang)).getText());
                         ((TextView) rootView.findViewById(R.id.toLang)).setText(t);
                     }
                 }
         );
+        int[] buttons = {R.id.button1, R.id.button2, R.id.button3, R.id.button4, R.id.button5, R.id.button6};
+        for (int button : buttons) {
+            rootView.findViewById(button).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    editText.getText().insert(editText.getSelectionStart(), ((Button) v).getText());
+                }
+            });
+        }
     }
 }

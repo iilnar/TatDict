@@ -29,12 +29,13 @@ public class SettingsFragment extends Fragment {
     public void onViewCreated(View view, Bundle savedInstanceStet) {
         ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayShowTitleEnabled(true);
         view.getRootView().findViewById(R.id.toolbarView).setVisibility(View.GONE);
+        view.getRootView().findViewById(R.id.text).setVisibility(View.GONE);
         getView().findViewById(R.id.updateDB).setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         String url = "http://my-files.ru/Save/2bcqj0/rus.txt";
-                        //downloadDictionary(url, "rus_to_tat.file");
+                        downloadDictionary(url, "rus_to_tat.file");
                         url = "http://ge.tt/api/1/files/35sa4UR2/0/blob?download";
                         downloadDictionary(url, "tat_to_rus.file");
                     }
@@ -76,7 +77,7 @@ public class SettingsFragment extends Fragment {
                     httpURLConnection.connect();
 
                     //file = File.createTempFile("base", "tmp");
-                    file = new File(getActivity().getExternalFilesDir(null), params[1]);
+                    file = new File(getActivity().getExternalFilesDir(null), (params[1] + ".tmp"));
                     fileOutputStream = new FileOutputStream(file);
                     inputStream = httpURLConnection.getInputStream();
 
@@ -91,6 +92,11 @@ public class SettingsFragment extends Fragment {
                     }
                     fileOutputStream.close();
                     inputStream.close();
+                    File newFile = new File(getActivity().getExternalFilesDir(null), params[1]);
+                    if (newFile.exists()) {
+                        newFile.delete();
+                    }
+                    file.renameTo(newFile);
                     return file;
                 } catch (IOException e) {
                     e.printStackTrace();

@@ -9,42 +9,42 @@
     <Button
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="a"
-        android:id="@+id/button"
+        android:text="Ә"
+        android:id="@+id/button1"
         android:layout_weight="1"/>
 
     <Button
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="b"
+        android:text="Җ"
         android:id="@+id/button2"
         android:layout_weight="1"/>
 
     <Button
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="c"
+        android:text="Ң"
         android:id="@+id/button3"
         android:layout_weight="1"/>
 
     <Button
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="d"
+        android:text="Ө"
         android:id="@+id/button4"
         android:layout_weight="1"/>
 
     <Button
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="e"
+        android:text="Ү"
         android:id="@+id/button5"
         android:layout_weight="1"/>
 
     <Button
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="f"
+        android:text="Һ"
         android:id="@+id/button6"
         android:layout_weight="1"/>
 </LinearLayout>
