@@ -10,8 +10,10 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.RotateAnimation;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import java.io.File;
@@ -27,17 +29,31 @@ public class DictionaryFragment extends Fragment {
     final List<DictionaryRecord> records = new ArrayList<>();
     RecyclerView recyclerView;
     RecyclerViewAdapter recyclerViewAdapter;
-    String dir = "tat_to_rus";
+    String dir;
     EditText editText;
+
+    public DictionaryFragment() {
+        setRetainInstance(true);
+    }
+
+    private void swapTextViev(TextView a, TextView b) {
+        CharSequence t = a.getText();
+        a.setText(b.getText());
+        b.setText(t);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.dictionary_fragment, container, false);
     }
 
+//    @Override
+//    public void onSaveInstanceState(Bundle outState) {
+//        outState.putString("dir", dir);
+//    }
+
     private boolean extractDictionary(File f) {
         try {
-            dictionary = new Dictionary();
             dictionary.readDump(f);
             records.clear();
             for (DictionaryRecord dictionaryRecord : dictionary.a) {
@@ -57,10 +73,25 @@ public class DictionaryFragment extends Fragment {
         ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayShowTitleEnabled(false);
         rootView.findViewById(R.id.toolbarView).setVisibility(View.VISIBLE);
         rootView.findViewById(R.id.text).setVisibility(View.VISIBLE);
+
         recyclerView = (RecyclerView) getView().findViewById(R.id.recyclerView);
-        recyclerViewAdapter = new RecyclerViewAdapter(records);
+
+        if (recyclerViewAdapter == null) {
+            recyclerViewAdapter = new RecyclerViewAdapter(records);
+        } else {
+            if (recyclerViewAdapter.isShowingAlertDialog) {
+                recyclerViewAdapter.showAlertDialog();
+            }
+        }
+        if (dir == null) {
+            dir = "tat_to_rus";
+        }
+        if (dir.equals("rus_to_tat")) {
+            swapTextViev((TextView) rootView.findViewById(R.id.fromLang), (TextView) rootView.findViewById(R.id.toLang));
+        }
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         //RecyclerView.ItemAnimator itemAnimator = new DefaultItemAnimator();
+
         extractDictionary(new File(getActivity().getExternalFilesDir(null), dir + ".file"));
 
         recyclerView.setAdapter(recyclerViewAdapter);
@@ -96,6 +127,11 @@ public class DictionaryFragment extends Fragment {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        ImageButton ib = (ImageButton) rootView.findViewById(R.id.swapButton);
+                        RotateAnimation ra = new RotateAnimation(0, 180, ib.getWidth() / 2, ib.getHeight() / 2);
+                        ra.setFillAfter(true);
+                        ra.setDuration(500);
+                        ib.setAnimation(ra);
                         switch (dir) {
                             case "tat_to_rus":
                                 dir = "rus_to_tat";
@@ -110,21 +146,26 @@ public class DictionaryFragment extends Fragment {
                         for (DictionaryRecord dr : res) {
                             records.add(dr);
                         }
+                        res = null;
                         recyclerViewAdapter.notifyDataSetChanged();
-                        CharSequence t = ((TextView) rootView.findViewById(R.id.fromLang)).getText();
-                        ((TextView) rootView.findViewById(R.id.fromLang)).setText(((TextView) rootView.findViewById(R.id.toLang)).getText());
-                        ((TextView) rootView.findViewById(R.id.toLang)).setText(t);
+                        swapTextViev((TextView) rootView.findViewById(R.id.fromLang), (TextView) rootView.findViewById(R.id.toLang));
                     }
                 }
         );
+
         int[] buttons = {R.id.button1, R.id.button2, R.id.button3, R.id.button4, R.id.button5, R.id.button6};
         for (int button : buttons) {
             rootView.findViewById(button).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    editText.getText().insert(editText.getSelectionStart(), ((Button) v).getText());
+                    editText.getText().insert(editText.getSelectionStart(), ((Button) v).getText().toString().toLowerCase());
                 }
             });
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
     }
 }

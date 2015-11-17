@@ -1,5 +1,6 @@
 package com.example.ilnarsabirzyanov.tatdict;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -8,6 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -20,106 +22,151 @@ import java.net.URL;
  * Created by Ilnar Sabirzyanov on 09.11.2015.
  */
 public class SettingsFragment extends Fragment {
+
+    private downloadTask downloadTask;
+    private ProgressDialog progressDialog;
+
+    public SettingsFragment() {
+        setRetainInstance(true);
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        setRetainInstance(true);
         return inflater.inflate(R.layout.settings_fragment, container, false);
     }
 
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceStet) {
+    public void onViewCreated(View view, Bundle savedInstanceState) {
         ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayShowTitleEnabled(true);
         view.getRootView().findViewById(R.id.toolbarView).setVisibility(View.GONE);
         view.getRootView().findViewById(R.id.text).setVisibility(View.GONE);
+
+        progressDialog = new ProgressDialog(getContext());
+        progressDialog.setMessage("Downloading..");
+        progressDialog.setCancelable(false);
+        progressDialog.setMax(100);
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+
+        if (downloadTask != null && downloadTask.getStatus() == AsyncTask.Status.RUNNING) {
+            progressDialog.show();
+        }
         getView().findViewById(R.id.updateDB).setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        String url = "http://my-files.ru/Save/2bcqj0/rus.txt";
-                        downloadDictionary(url, "rus_to_tat.file");
-                        url = "http://ge.tt/api/1/files/35sa4UR2/0/blob?download";
-                        downloadDictionary(url, "tat_to_rus.file");
+                        downloadTask = new downloadTask(getActivity());
+                        downloadTask.execute("http://essay.besaba.com/dict/rus_to_tat.file", "rus_to_tat.file",
+                                "http://essay.besaba.com/dict/tat_to_rus.file", "tat_to_rus.file");
                     }
                 }
         );
     }
 
-    private void downloadDictionary(String url, String fileName) {
-        final ProgressDialog progressDialog = new ProgressDialog(getContext());
-        new AsyncTask<String, Integer, File>() {
-            private Exception m_error = null;
+    class downloadTask extends AsyncTask<String, Integer, Boolean> {
+        Activity activity;
+        private Exception m_error;
 
-            @Override
-            protected void onPreExecute() {
-                progressDialog.setMessage("Downloading..");
-                progressDialog.setCancelable(false);
-                progressDialog.setMax(100);
-                progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                progressDialog.show();
-            }
+        downloadTask(Activity activity) {
+            this.activity = activity;
+//            progressDialog = new ProgressDialog(activity);
+        }
 
-            @Override
-            protected File doInBackground(String... params) {
-                URL url;
-                HttpURLConnection httpURLConnection;
-                InputStream inputStream;
-                int totalSize;
-                int downloadSize;
-                byte[] buffer;
-                int bufferLength;
-                File file;
-                FileOutputStream fileOutputStream;
-                try {
-                    url = new URL(params[0]);
-                    httpURLConnection = (HttpURLConnection) url.openConnection();
+        @Override
+        protected void onPreExecute() {
+            progressDialog.show();
+        }
 
-                    httpURLConnection.setRequestMethod("GET");
-                    httpURLConnection.setDoOutput(true);
-                    httpURLConnection.connect();
+        private File download(String link, String fileName) {
+            HttpURLConnection httpURLConnection;
+            InputStream inputStream = null;
+            int totalSize;
+            int downloadSize;
+            byte[] buffer;
+            int bufferLength;
+            File file = null;
+            URL url;
 
-                    //file = File.createTempFile("base", "tmp");
-                    file = new File(getActivity().getExternalFilesDir(null), (params[1] + ".tmp"));
-                    fileOutputStream = new FileOutputStream(file);
-                    inputStream = httpURLConnection.getInputStream();
+            FileOutputStream fileOutputStream = null;
+            try {
+                url = new URL(link);
+                httpURLConnection = (HttpURLConnection) url.openConnection();
 
-                    totalSize = httpURLConnection.getContentLength();
-                    downloadSize = 0;
+                httpURLConnection.setRequestMethod("GET");
+                httpURLConnection.setDoOutput(true);
+                httpURLConnection.connect();
 
-                    buffer = new byte[1024];
-                    while ((bufferLength = inputStream.read(buffer)) != -1) {
-                        fileOutputStream.write(buffer, 0, bufferLength);
-                        downloadSize += bufferLength;
-                        publishProgress(downloadSize, totalSize);
-                    }
-                    fileOutputStream.close();
-                    inputStream.close();
-                    File newFile = new File(getActivity().getExternalFilesDir(null), params[1]);
-                    if (newFile.exists()) {
-                        newFile.delete();
-                    }
-                    file.renameTo(newFile);
-                    return file;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    m_error = e;
+                file = new File(activity.getExternalFilesDir(null), fileName + ".tmp");
+                fileOutputStream = new FileOutputStream(file);
+                inputStream = httpURLConnection.getInputStream();
+
+                totalSize = httpURLConnection.getContentLength();
+                downloadSize = 0;
+
+                buffer = new byte[1024];
+                while ((bufferLength = inputStream.read(buffer)) != -1) {
+                    fileOutputStream.write(buffer, 0, bufferLength);
+                    downloadSize += bufferLength;
+                    publishProgress(downloadSize, totalSize);
                 }
-                return null;
-            }
-
-            @Override
-            protected void onProgressUpdate(Integer... values) {
-                progressDialog.setProgress((int) ((values[0] / (float) values[1]) * 100));
-            }
-
-            @Override
-            protected void onPostExecute(File file) {
-                if (m_error != null) {
-                    m_error.printStackTrace();
-                    return;
+            } catch (IOException e) {
+                e.printStackTrace();
+                m_error = e;
+            } finally {
+                if (inputStream != null) {
+                    try {
+                        inputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
-                progressDialog.hide();
-                //file.delete();
+                if (fileOutputStream != null) {
+                    try {
+                        fileOutputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
-        }.execute(url, fileName);
+            return file;
+        }
+
+        @Override
+        protected Boolean doInBackground(String... params) {
+            File rusToTat = download(params[0], params[1]);
+            boolean b;
+            if (rusToTat == null) {
+                return false;
+            }
+            File tatToRus = download(params[2], params[3]);
+            if (tatToRus == null) {
+                rusToTat.delete();
+                return false;
+            }
+            File f = activity.getFilesDir();
+            new File(activity.getExternalFilesDir(null), params[1]).delete();
+            rusToTat.renameTo(new File(activity.getExternalFilesDir(null), params[1]));
+            new File(activity.getExternalFilesDir(null), params[3]).delete();
+            tatToRus.renameTo(new File(activity.getExternalFilesDir(null), params[3]));
+            return true;
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            progressDialog.setProgress((int) ((values[0] / (float) values[1]) * 100));
+        }
+
+        @Override
+        protected void onPostExecute(Boolean res) {
+            progressDialog.hide();
+            if (m_error != null) {
+                m_error.printStackTrace();
+                Toast.makeText(activity, "Произошла ошибка.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Toast.makeText(activity, "Словари скачаны.", Toast.LENGTH_SHORT).show();
+            //file.delete();
+        }
     }
 
 }

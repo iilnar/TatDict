@@ -8,14 +8,17 @@
 
     <TextView
         android:id="@+id/recyclerViewItemName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="fill_parent"
+        android:layout_height="match_parent"
         android:layout_marginLeft="8dp"
         android:layout_centerVertical="true"
+        android:background="?android:attr/selectableItemBackground"
         tools:text="name"
         android:textSize="16sp"
         android:paddingLeft="16dp"
-        android:paddingRight="16dp"/>
+        android:paddingRight="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp" />
 
 
 </RelativeLayout>

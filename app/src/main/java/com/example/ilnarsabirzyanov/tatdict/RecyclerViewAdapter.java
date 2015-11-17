@@ -1,7 +1,9 @@
 package com.example.ilnarsabirzyanov.tatdict;
 
 import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.support.v7.widget.RecyclerView;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +15,8 @@ import java.util.List;
  * Created by Ilnar Sabirzyanov on 07.11.2015.
  */
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> implements View.OnClickListener{
-
+    AlertDialog.Builder builder;
+    boolean isShowingAlertDialog;
     private List<DictionaryRecord> dictionaryRecordList;
 
     public RecyclerViewAdapter(List<DictionaryRecord> l) {
@@ -43,9 +46,24 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     public void onClick(View v) {
         DictionaryRecord dictionaryRecord = (DictionaryRecord)v.getTag(R.id.tag_dict);
         if (dictionaryRecord != null) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-            builder.setMessage(dictionaryRecord.translation).create().show();
+            builder = new AlertDialog.Builder(v.getContext());
+            String text = dictionaryRecord.translation.replace("<i>", "<font color = 'red'>");
+            text = text.replace("</i>", "</font>");
+            builder.setTitle(dictionaryRecord.word);
+            builder.setMessage(Html.fromHtml(text));
+            builder.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialog) {
+                    isShowingAlertDialog = false;
+                }
+            });
+            isShowingAlertDialog = true;
+            showAlertDialog();
         }
+    }
+
+    public void showAlertDialog() {
+        builder.create().show();
     }
 
     class ViewHolder extends RecyclerView.ViewHolder{
