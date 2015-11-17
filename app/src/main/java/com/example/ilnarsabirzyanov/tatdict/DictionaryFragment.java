@@ -7,10 +7,12 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.RotateAnimation;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -36,7 +38,7 @@ public class DictionaryFragment extends Fragment {
         setRetainInstance(true);
     }
 
-    private void swapTextViev(TextView a, TextView b) {
+    private void swapTextView(TextView a, TextView b) {
         CharSequence t = a.getText();
         a.setText(b.getText());
         b.setText(t);
@@ -46,11 +48,6 @@ public class DictionaryFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.dictionary_fragment, container, false);
     }
-
-//    @Override
-//    public void onSaveInstanceState(Bundle outState) {
-//        outState.putString("dir", dir);
-//    }
 
     private boolean extractDictionary(File f) {
         try {
@@ -79,7 +76,7 @@ public class DictionaryFragment extends Fragment {
         if (recyclerViewAdapter == null) {
             recyclerViewAdapter = new RecyclerViewAdapter(records);
         } else {
-            if (recyclerViewAdapter.isShowingAlertDialog) {
+            if (recyclerViewAdapter.isShowingAlertDialog()) {
                 recyclerViewAdapter.showAlertDialog();
             }
         }
@@ -87,7 +84,7 @@ public class DictionaryFragment extends Fragment {
             dir = "tat_to_rus";
         }
         if (dir.equals("rus_to_tat")) {
-            swapTextViev((TextView) rootView.findViewById(R.id.fromLang), (TextView) rootView.findViewById(R.id.toLang));
+            swapTextView((TextView) rootView.findViewById(R.id.fromLang), (TextView) rootView.findViewById(R.id.toLang));
         }
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         //RecyclerView.ItemAnimator itemAnimator = new DefaultItemAnimator();
@@ -110,6 +107,9 @@ public class DictionaryFragment extends Fragment {
                     @Override
                     public void onTextChanged(CharSequence s, int start, int before, int count) {
                         ArrayList<DictionaryRecord> res = dictionary.search(s.toString());
+                        if (res.size() == 0) {
+                            res = dictionary.deepSearch(s.toString());
+                        }
                         records.clear();
                         for (DictionaryRecord dr : res) {
                             records.add(dr);
@@ -123,6 +123,27 @@ public class DictionaryFragment extends Fragment {
                 }
         );
 
+        editText.setOnEditorActionListener(
+                new TextView.OnEditorActionListener() {
+                    @Override
+                    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                        if (actionId == EditorInfo.IME_ACTION_DONE) {
+                            ArrayList<DictionaryRecord> res = dictionary.search(((EditText)rootView.findViewById(R.id.text)).getText().toString());
+                            if (res.size() == 0) {
+                                res = dictionary.deepSearch(((EditText)rootView.findViewById(R.id.text)).getText().toString());
+                            }
+                            records.clear();
+                            for (DictionaryRecord dr : res) {
+                                records.add(dr);
+                            }
+                            recyclerViewAdapter.notifyDataSetChanged();
+                            return true;
+                        }
+                        return false;
+                    }
+                }
+        );
+
         rootView.findViewById(R.id.swapButton).setOnClickListener(
                 new View.OnClickListener() {
                     @Override
@@ -130,7 +151,7 @@ public class DictionaryFragment extends Fragment {
                         ImageButton ib = (ImageButton) rootView.findViewById(R.id.swapButton);
                         RotateAnimation ra = new RotateAnimation(0, 180, ib.getWidth() / 2, ib.getHeight() / 2);
                         ra.setFillAfter(true);
-                        ra.setDuration(500);
+                        ra.setDuration(250);
                         ib.setAnimation(ra);
                         switch (dir) {
                             case "tat_to_rus":
@@ -148,7 +169,7 @@ public class DictionaryFragment extends Fragment {
                         }
                         res = null;
                         recyclerViewAdapter.notifyDataSetChanged();
-                        swapTextViev((TextView) rootView.findViewById(R.id.fromLang), (TextView) rootView.findViewById(R.id.toLang));
+                        swapTextView((TextView) rootView.findViewById(R.id.fromLang), (TextView) rootView.findViewById(R.id.toLang));
                     }
                 }
         );
@@ -162,10 +183,5 @@ public class DictionaryFragment extends Fragment {
                 }
             });
         }
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
     }
 }

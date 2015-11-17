@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> implements View.OnClickListener{
     AlertDialog.Builder builder;
-    boolean isShowingAlertDialog;
+    protected boolean isShowingAlertDialog;
     private List<DictionaryRecord> dictionaryRecordList;
 
     public RecyclerViewAdapter(List<DictionaryRecord> l) {
@@ -60,6 +60,10 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
             isShowingAlertDialog = true;
             showAlertDialog();
         }
+    }
+
+    public boolean isShowingAlertDialog() {
+        return isShowingAlertDialog;
     }
 
     public void showAlertDialog() {

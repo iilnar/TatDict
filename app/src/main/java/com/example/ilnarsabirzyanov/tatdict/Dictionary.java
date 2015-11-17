@@ -1,10 +1,8 @@
 package com.example.ilnarsabirzyanov.tatdict;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -124,23 +122,6 @@ public class Dictionary {
         return true;
     }
 
-    public void dump() throws IOException {
-        File dumpFile = new File(new File(Util.rootFolder), "dump.file.tmp");
-        if (!dumpFile.exists() || !dumpFile.canWrite()) {
-            // TODO write to log that can't write
-            return;
-        }
-        FileOutputStream file = new FileOutputStream(dumpFile);
-        DataOutputStream output = new DataOutputStream(file);
-        output.writeInt(a.size());
-        for (DictionaryRecord e : a) {
-            output.writeUTF(e.word);
-            output.writeUTF(e.translation);
-        }
-        output.close();
-        dumpFile.renameTo(new File(Util.rootFolder, "dump.file"));
-    }
-
     public void addWord(String word, String translation) {
         a.add(a.size(), new DictionaryRecord(word, translation));
     }
@@ -200,14 +181,14 @@ public class Dictionary {
         a = "." + a;
         b = "." + b;
         int n = a.length(), m = b.length();
-        int[] d = new int[n];
+        int[] d = new int[m];
         int[] dOld;
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < m; i++) {
             d[i] = i;
         }
         for (int i = 1; i < n; i++) {
             dOld = d;
-            d = new int[n];
+            d = new int[m];
             d[0] = i;
             for (int j = 1; j < m; j++) {
                 d[j] = dOld[j - 1];
@@ -223,7 +204,7 @@ public class Dictionary {
     public ArrayList<DictionaryRecord> deepSearch(String word) {
         ArrayList<DictionaryRecord> res = new ArrayList<>();
         for (DictionaryRecord dr : a) {
-            if (levenshteinDistance(word, dr.word) <= 3) {
+            if (levenshteinDistance(word, dr.word) <= 2) {
                 res.add(dr);
             }
         }
