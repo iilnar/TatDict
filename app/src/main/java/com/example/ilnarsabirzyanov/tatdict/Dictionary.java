@@ -12,6 +12,11 @@ import java.util.Map;
 public class Dictionary {
     ArrayList<DictionaryRecord> a = new ArrayList<>();
     static private Map<Character, Integer> alphabet;
+    enum State {
+        RUNNING, DONE;
+    }
+
+    public State state;
 
     Dictionary() {
         if (alphabet == null) {
@@ -100,6 +105,7 @@ public class Dictionary {
     }
 
     public boolean readDump(File dumpFile) throws IOException {
+        state = State.RUNNING;
         if (!dumpFile.exists() || !dumpFile.canRead()) {
             // TODO write to log that can't write
             return false;
@@ -110,15 +116,8 @@ public class Dictionary {
         while ((word = br.readLine()) != null && (translation = br.readLine()) != null) {
             a.add(new DictionaryRecord(word, translation));
         }
-//        FileInputStream file = new FileInputStream(dumpFile);
-//        DataInputStream input = new DataInputStream(file);
-//        a.clear();
-//        int n = input.readInt();
-//        for (int i = 0; i < n; i++) {
-//            String word = input.readUTF();
-//            String translation = input.readUTF();
-//            a.add(new DictionaryRecord(word, translation));
-//        }
+        br.close();
+        state = State.DONE;
         return true;
     }
 
@@ -163,16 +162,48 @@ public class Dictionary {
     }
 
     public ArrayList<DictionaryRecord> search(String prefix) {
-        int l = binarySearch(prefix, 0), r = binarySearch(prefix, 1);
         ArrayList<DictionaryRecord> res = new ArrayList<>();
+        int l = binarySearch(prefix, 0), r = binarySearch(prefix, 1);
         for (int i = l; i < r; i++) {
             res.add(a.get(i));
         }
         return res;
     }
 
+    static int editDistance(String a, String b) {
+		int n = a.length() + 1;
+		int m = b.length() + 1;
+        if (n > m) {
+            return editDistance(b, a);
+        }
+		int k = 2;
+		int[] cost = new int[m];
+		int[] newCost = new int[m];
+		for (int i = 0; i < m; i++) {
+			cost[i] = i;
+			newCost[i] = Integer.MAX_VALUE / 4;
+		}
+		for (int j = 1; j < n; j++) {
+	    	newCost[0] = j;
+	    	for (int i = Math.max(1, j - k); i < Math.min(m, j + k + 1); i++) {
+				if (a.charAt(j - 1) == b.charAt(i - 1)) {
+					newCost[i] = cost[i - 1];
+				} else {
+					newCost[i] = cost[i - 1] + 1;
+				}
+				newCost[i] = Math.min(newCost[i], cost[i] + 1);
+				newCost[i] = Math.min(newCost[i], newCost[i - 1] + 1);
+	    	}
+	    	int[] t = cost;
+	    	cost = newCost;
+	    	newCost = t;
+		}
+		return cost[m - 1];
+    }
+
+
     private int levenshteinDistance(String a, String b) {
-        int k = 3;
+        int k = 2;
         if (a.length() > b.length()) {
             String t = b;
             b = a;
@@ -204,7 +235,7 @@ public class Dictionary {
     public ArrayList<DictionaryRecord> deepSearch(String word) {
         ArrayList<DictionaryRecord> res = new ArrayList<>();
         for (DictionaryRecord dr : a) {
-            if (levenshteinDistance(word, dr.word) <= 2) {
+            if (editDistance(word, dr.word) <= 2) {
                 res.add(dr);
             }
         }

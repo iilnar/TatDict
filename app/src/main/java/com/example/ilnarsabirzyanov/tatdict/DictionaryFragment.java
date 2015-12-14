@@ -1,5 +1,6 @@
 package com.example.ilnarsabirzyanov.tatdict;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
@@ -17,6 +18,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -33,6 +35,7 @@ public class DictionaryFragment extends Fragment {
     RecyclerViewAdapter recyclerViewAdapter;
     String dir;
     EditText editText;
+    AsyncReader asyncReader;
 
     public DictionaryFragment() {
         setRetainInstance(true);
@@ -44,24 +47,61 @@ public class DictionaryFragment extends Fragment {
         b.setText(t);
     }
 
+    public boolean search (String s) {
+        if (dictionary.state == Dictionary.State.RUNNING) return false;
+        ArrayList<DictionaryRecord> res = dictionary.search(s);
+        if (res.size() == 0) {
+            res = dictionary.deepSearch(s);
+        }
+        records.clear();
+        for (DictionaryRecord dr : res) {
+            records.add(dr);
+        }
+        recyclerViewAdapter.notifyDataSetChanged();
+        return true;
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.dictionary_fragment, container, false);
     }
 
-    private boolean extractDictionary(File f) {
-        try {
-            dictionary.readDump(f);
-            records.clear();
-            for (DictionaryRecord dictionaryRecord : dictionary.a) {
-                records.add(dictionaryRecord);
+    private void extractDictionary(File f) {
+        this.getActivity().findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
+        if (asyncReader != null) {
+            if (dictionary.state == dictionary.state.RUNNING) {
+                asyncReader.cancel(true);
             }
-            recyclerViewAdapter.notifyDataSetChanged();
-            return true;
-        } catch (Exception e) {
-            return false;
+        }
+        dictionary.state = Dictionary.State.RUNNING;
+        asyncReader = new AsyncReader(this);
+        asyncReader.execute(f);
+    }
+
+    static class AsyncReader extends AsyncTask<File, Void, Boolean> {
+        DictionaryFragment fragment;
+        AsyncReader(DictionaryFragment fragment) {
+            this.fragment = fragment;
         }
 
+        @Override
+        protected Boolean doInBackground(File... files) {
+            try {
+                return fragment.dictionary.readDump(files[0]);
+            } catch (Exception e) {
+                return false;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Boolean res) {
+            if (res) {
+                fragment.search(fragment.editText.getText().toString());
+                fragment.getActivity().findViewById(R.id.progressBar).setVisibility(View.INVISIBLE);
+            } else {
+                Toast.makeText(fragment.getActivity(), "Обновите базу словаря.", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     @Override
@@ -101,20 +141,11 @@ public class DictionaryFragment extends Fragment {
                 new TextWatcher() {
                     @Override
                     public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
                     }
 
                     @Override
                     public void onTextChanged(CharSequence s, int start, int before, int count) {
-                        ArrayList<DictionaryRecord> res = dictionary.search(s.toString());
-                        if (res.size() == 0) {
-                            res = dictionary.deepSearch(s.toString());
-                        }
-                        records.clear();
-                        for (DictionaryRecord dr : res) {
-                            records.add(dr);
-                        }
-                        recyclerViewAdapter.notifyDataSetChanged();
+                        search(editText.getText().toString());
                     }
 
                     @Override
@@ -128,16 +159,7 @@ public class DictionaryFragment extends Fragment {
                     @Override
                     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                         if (actionId == EditorInfo.IME_ACTION_DONE) {
-                            ArrayList<DictionaryRecord> res = dictionary.search(((EditText)rootView.findViewById(R.id.text)).getText().toString());
-                            if (res.size() == 0) {
-                                res = dictionary.deepSearch(((EditText)rootView.findViewById(R.id.text)).getText().toString());
-                            }
-                            records.clear();
-                            for (DictionaryRecord dr : res) {
-                                records.add(dr);
-                            }
-                            recyclerViewAdapter.notifyDataSetChanged();
-                            return true;
+                            return search(editText.getText().toString());
                         }
                         return false;
                     }
@@ -153,6 +175,7 @@ public class DictionaryFragment extends Fragment {
                         ra.setFillAfter(true);
                         ra.setDuration(250);
                         ib.setAnimation(ra);
+
                         switch (dir) {
                             case "tat_to_rus":
                                 dir = "rus_to_tat";
@@ -162,13 +185,6 @@ public class DictionaryFragment extends Fragment {
                                 break;
                         }
                         extractDictionary(new File(getActivity().getExternalFilesDir(null), dir + ".file"));
-                        ArrayList<DictionaryRecord> res = dictionary.search(editText.getText().toString());
-                        records.clear();
-                        for (DictionaryRecord dr : res) {
-                            records.add(dr);
-                        }
-                        res = null;
-                        recyclerViewAdapter.notifyDataSetChanged();
                         swapTextView((TextView) rootView.findViewById(R.id.fromLang), (TextView) rootView.findViewById(R.id.toLang));
                     }
                 }

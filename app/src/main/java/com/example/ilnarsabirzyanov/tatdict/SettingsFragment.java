@@ -56,8 +56,8 @@ public class SettingsFragment extends Fragment {
                     @Override
                     public void onClick(View v) {
                         downloadTask = new downloadTask(getActivity());
-                        downloadTask.execute("http://essay.besaba.com/dict/rus_to_tat.file", "rus_to_tat.file",
-                                "http://essay.besaba.com/dict/tat_to_rus.file", "tat_to_rus.file");
+                        downloadTask.execute("https://www.dropbox.com/s/2i6ta2gb6ae65po/rus_to_tat.file?dl=1", "rus_to_tat.file",
+                                "https://www.dropbox.com/s/cwdf5saxc27i43z/tat_to_rus.file?dl=1", "tat_to_rus.file");
                     }
                 }
         );
