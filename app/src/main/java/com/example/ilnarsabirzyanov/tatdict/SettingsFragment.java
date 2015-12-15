@@ -56,7 +56,7 @@ public class SettingsFragment extends Fragment {
                     @Override
                     public void onClick(View v) {
                         downloadTask = new downloadTask(getActivity());
-                        downloadTask.execute("https://www.dropbox.com/s/2i6ta2gb6ae65po/rus_to_tat.file?dl=1", "rus_to_tat.file",
+                        downloadTask.execute("https://www.dropbox.com/s/2i6ta2gb6ae65po/rus_to_tat.file?raw=1", "rus_to_tat.file",
                                 "https://www.dropbox.com/s/cwdf5saxc27i43z/tat_to_rus.file?dl=1", "tat_to_rus.file");
                     }
                 }
@@ -91,16 +91,16 @@ public class SettingsFragment extends Fragment {
             try {
                 url = new URL(link);
                 httpURLConnection = (HttpURLConnection) url.openConnection();
+                int responseCode = httpURLConnection.getResponseCode();
+                totalSize = httpURLConnection.getContentLength();
 
                 httpURLConnection.setRequestMethod("GET");
-                httpURLConnection.setDoOutput(true);
                 httpURLConnection.connect();
 
                 file = new File(activity.getExternalFilesDir(null), fileName + ".tmp");
                 fileOutputStream = new FileOutputStream(file);
                 inputStream = httpURLConnection.getInputStream();
 
-                totalSize = httpURLConnection.getContentLength();
                 downloadSize = 0;
 
                 buffer = new byte[1024];
@@ -112,6 +112,10 @@ public class SettingsFragment extends Fragment {
             } catch (IOException e) {
                 e.printStackTrace();
                 m_error = e;
+                if (file != null) {
+                    file.deleteOnExit();
+                }
+                file = null;
             } finally {
                 if (inputStream != null) {
                     try {

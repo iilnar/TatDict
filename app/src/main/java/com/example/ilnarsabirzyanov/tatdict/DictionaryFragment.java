@@ -75,6 +75,8 @@ public class DictionaryFragment extends Fragment {
         }
         dictionary.state = Dictionary.State.RUNNING;
         asyncReader = new AsyncReader(this);
+        records.clear();
+        recyclerViewAdapter.notifyDataSetChanged();
         asyncReader.execute(f);
     }
 
@@ -199,5 +201,12 @@ public class DictionaryFragment extends Fragment {
                 }
             });
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        records.clear();
+        dictionary.a.clear();
+        super.onDestroy();
     }
 }

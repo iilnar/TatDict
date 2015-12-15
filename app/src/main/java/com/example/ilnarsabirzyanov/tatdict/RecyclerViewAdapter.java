@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * Created by Ilnar Sabirzyanov on 07.11.2015.
  */
-public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> implements View.OnClickListener{
+public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> implements View.OnClickListener {
     AlertDialog.Builder builder;
     protected boolean isShowingAlertDialog;
     private List<DictionaryRecord> dictionaryRecordList;
